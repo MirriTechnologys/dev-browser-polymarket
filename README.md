@@ -1,6 +1,13 @@
-BTC Up or Down 5m – Polymarket BotAdvanced Automated Trading & Monitoring Bot using dev-browser + Claude Code![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)
+BTC Up or Down 5m – Polymarket BotAdvanced Automated Trading & Monitoring Bot using dev-browser + Claude Code
+
+
+
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)
 ![Python](https://img.shields.io/badge/Python-3.12-green.svg)
-![dev-browser](https://img.shields.io/badge/dev--browser-Claude%20Code-purple.svg)BTC Up or Down every 5 minutes only • Dynamic URL that changes every 300 seconds • Full browser control via dev-browser
+![dev-browser](https://img.shields.io/badge/dev--browser-Claude%20Code-purple.svg)
+
+
+BTC Up or Down every 5 minutes only • Dynamic URL that changes every 300 seconds • Full browser control via dev-browser
  Key Features100% Automatic URL Generation: btc-updown-5m-{window_ts} where window_ts = floor(now / 300) * 300 (no manual scraping or searching required).
 Persistent Sessions: Log in once and maintain the session all day.
 Hybrid Architecture:TypeScript → dev-browser scripts (executed inside QuickJS sandbox).
