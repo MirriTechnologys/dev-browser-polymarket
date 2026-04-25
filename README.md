@@ -1,122 +1,130 @@
-# dev-browser-polymarket-5mn
-أتمتة أسواق الـ 5-Minute Crypto على Polymarket باستخدام dev-browser + دمج هجين مع API الرسميالوصف
-هذا المشروع هو إعداد مخصص وموحد لـ dev-browser (skill مجتمعي لـ Claude Code) يجمع بين:التحكم المباشر في المتصفح عبر QuickJS sandbox (Playwright-style).
-دمج هجين مع Gamma API + CLOB API الرسميين من Polymarket.
-dev-browser كـ fallback ذكي لضمان الاستمرارية 100% حتى في حال تغيير الواجهة أو rate limits.
+ تم إنشاء README احترافي ومتقدم بالكاملإليك README.md جاهز للنسخ والاستخدام مباشرة في مشروعك. المشروع مصمم من الصفر كما طلبت، مخصص 100% لسوق BTC Up or Down 5m على Polymarket، مع مراعاة أن رقم الـ event ID يتغير كل 5 دقائق (يُحسب تلقائيًا من الـ Unix timestamp).markdown
 
-الهدف: مراقبة واستخراج بيانات أسواق الـ 5-Minute Crypto (Bitcoin Up/Down، Ethereum، Solana، إلخ) بسرعة فائقة، تكلفة منخفضة، واستقرار عالي.المميزات الرئيسيةجلسات مستمرة (Persistent Sessions): تسجيل دخول مرة واحدة + مراقبة مستمرة.
-استخراج JSON منظم للأسواق، الأسعار، الحجم، الوقت المتبقي، liquidity.
-دمج هجين (Hybrid): API أولاً (Gamma + CLOB) → dev-browser fallback تلقائي.
-مراقبة عالية التردد: تحديث كل 15-30 ثانية لعشرات الأسواق.
-دعم Multi-Page: مراقبة BTC + ETH + SOL في وقت واحد.
-أمان كامل: كل شيء داخل sandbox معزول (لا وصول للملفات أو النظام).
-توفير 70-90% من توكنات Claude مقارنة بالطرق التقليدية.
+# BTC Up or Down 5m – Polymarket Bot
+**Advanced Automated Trading & Monitoring Bot using dev-browser + Claude Code**
 
-المتطلباتClaude Code (مدفوع موصى به).
-dev-browser مثبت.
-حساب Polymarket + محفظة crypto (للتداول).
-Private Key (لـ CLOB authenticated) — يُدار خارج sandbox.
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org)
+[![Python](https://img.shields.io/badge/Python-3.12-green.svg)](https://www.python.org)
+[![dev-browser](https://img.shields.io/badge/dev--browser-Claude%20Code-purple.svg)](https://github.com/SawyerHood/dev-browser)
 
-التثبيتbash
+> سوق BTC Up or Down كل 5 دقائق فقط • URL ديناميكي (يتغير كل 300 ثانية) • تحكم كامل في المتصفح عبر dev-browser
 
-# 1. تثبيت dev-browser (CLI)
-npm install -g dev-browser
-dev-browser install
+---
 
-# 2. تثبيت كـ Skill في Claude Code
+## 🌟 المميزات المتقدمة
+
+- **حساب URL تلقائي 100% دقيق**: `btc-updown-5m-{window_ts}` حيث `window_ts = floor(now / 300) * 300` (لا حاجة للبحث أو الـ scraping).
+- **Persistent Sessions**: تسجيل دخول مرة واحدة + جلسة مستمرة طوال اليوم.
+- **Hybrid Architecture**: 
+  - **TypeScript** → سكريبتات dev-browser (تنفذ داخل QuickJS sandbox).
+  - **Python** → Orchestrator + Scheduler + Technical Analysis + Logging + Persistence.
+- استخراج **real-time odds** (Up/Down prices) بدقة عالية عبر DOM الحقيقي.
+- دعم **multi-step workflows** (login → navigate → extract → trade → screenshot → JSON export).
+- Error recovery + retry logic + rate-limit awareness.
+- Logging متقدم + JSON output + integration مع أي strategy (TA, ML, إلخ).
+- Sandboxed & secure (لا وصول إلى filesystem أو host).
+
+---
+
+---
+
+## 🛠️ Prerequisites
+
+- **Claude Code** (Anthropic) + dev-browser skill مثبت
+- Python 3.12+
+- Node.js (لترجمة TypeScript → JS إذا أردت)
+- حساب Polymarket + محفظة متصلة (MetaMask أو WalletConnect)
+- USDC على Polygon (للتداول)
+
+### تثبيت dev-browser (مرة واحدة)
+
+```bash
+# داخل Claude Code
 /plugin marketplace add sawyerhood/dev-browser
 /plugin install dev-browser@sawyerhood/dev-browser
 
-إعداد الصلاحيات (في ~/.claude/settings.json):json
+ Installationbash
 
-{
-  "permissions": {
-    "allow": ["Bash(dev-browser *)", "Bash(npx dev-browser *)"]
-  }
+git clone <your-repo>
+cd polymarket-btc-5m-bot
+
+# Python
+pip install -r requirements.txt
+
+# TypeScript (اختياري – للتطوير)
+cd ts && npm install && npm run build
+
+ Usage1. تشغيل الـ Orchestrator (Python)bash
+
+python python/main.py --mode live --strategy ta
+
+2. أوامر dev-browser الرئيسية (TypeScript)جميع السكريبتات تُنفَّذ داخل Claude Code عبر:ts
+
+// ts/browser.ts
+import { Browser } from "dev-browser";
+
+const browser = new Browser({ persistent: true });
+
+await browser.goto(`https://polymarket.com/event/btc-updown-5m-${getCurrentWindowTs()}`);
+
+أهم دالة (مُحسَّنة للسوق):ts
+
+// ts/market.ts
+export function getCurrentWindowTs(): number {
+  const now = Math.floor(Date.now() / 1000);
+  return Math.floor(now / 300) * 300; // divisible by 300 seconds
 }
 
-المنطق الهجين (Hybrid Logic) – السكريبت الرئيسياحفظ هذا كملف hybrid-polymarket-5mn.js واستخدمه داخل dev-browser:js
+ أمثلة سكريبتات dev-browser (TypeScript)استخراج الأسعار الحاليةts
 
-// hybrid-polymarket-5mn.js
-const GAMMA_BASE = "https://gamma-api.polymarket.com";
-const CLOB_BASE = "https://clob.polymarket.com";
+// ts/extract-odds.ts
+const upPrice = await browser.evaluate(() => 
+  document.querySelector('[data-testid="yes-price"]')?.textContent
+);
+const downPrice = await browser.evaluate(() => 
+  document.querySelector('[data-testid="no-price"]')?.textContent
+);
 
-async function fetchWithFallback(url, options = {}, fallbackFn) {
-  try {
-    const response = await page.evaluate(async (u, opts) => {
-      const res = await fetch(u, opts);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    }, url, options);
-    return { source: "api", data: response };
-  } catch (e) {
-    console.warn(`[Fallback] API فشل → dev-browser: ${e.message}`);
-    return { source: "browser", data: await fallbackFn() };
-  }
-}
+return { up: parseFloat(upPrice!), down: parseFloat(downPrice!), timestamp: Date.now() };
 
-// 1. جلب جميع أسواق 5mn Crypto
-async function get5mnCryptoMarkets() {
-  const url = `${GAMMA_BASE}/markets?active=true&closed=false&limit=200`;
-  return await fetchWithFallback(url, {}, async () => {
-    const page = await browser.getPage("polymarket-5mn");
-    await page.goto("https://polymarket.com/crypto/5M", { waitUntil: "domcontentloaded" });
-    return await page.evaluate(() => {
-      const cards = document.querySelectorAll('[data-testid="market-card"]');
-      return Array.from(cards).map(card => ({
-        title: card.querySelector('h3, [class*="question"]')?.innerText || '',
-        yesPrice: parseFloat(card.querySelector('[class*="yes"]')?.innerText?.replace('%', '')) || null,
-        noPrice: parseFloat(card.querySelector('[class*="no"]')?.innerText?.replace('%', '')) || null,
-        volume: card.querySelector('[class*="volume"]')?.innerText || '',
-        timeLeft: card.querySelector('[class*="time"]')?.innerText || '',
-        url: card.querySelector('a')?.href || ''
-      })).filter(m => m.title.toLowerCase().includes('5 min') || m.title.toLowerCase().includes('5m'));
-    });
-  });
-}
+تنفيذ صفقة (شراء Up أو Down)ts
 
-// 2. جلب Order Book + Midpoint (CLOB)
-async function getOrderBook(tokenId) {
-  const url = `${CLOB_BASE}/book?token_id=${tokenId}`;
-  return await fetchWithFallback(url, {}, async () => {
-    const page = await browser.getPage("market-detail");
-    await page.goto(`https://polymarket.com/event/...${tokenId}`, { waitUntil: "networkidle" });
-    return await page.evaluate(() => ({
-      midpoint: parseFloat(document.querySelector('.midpoint, [class*="price"]')?.innerText || '0')
-    }));
-  });
-}
+// ts/trade.ts
+await browser.click('[data-testid="buy-yes-button"]'); // أو buy-no
+await browser.fill('input[placeholder="Amount"]', amount);
+await browser.click('button:has-text("Confirm")');
+// انتظر توقيع المحفظة (manual أو auto إذا كان الـ extension مفعّل)
 
-// 3. Monitoring Loop رئيسي
-async function startMonitoring(intervalMs = 15000) {
-  const page = await browser.getPage("main-polymarket");
-  await page.goto("https://polymarket.com/crypto/5M", { waitUntil: "domcontentloaded" });
+ Python Orchestrator (main.py)python
 
-  setInterval(async () => {
-    const markets = await get5mnCryptoMarkets();
-    console.log(`[${new Date().toISOString()}] تم تحديث ${markets.length} سوق 5mn (source: ${markets[0]?.source})`);
-    // يمكنك هنا إرسال الـ JSON إلى Claude أو Telegram
-  }, intervalMs);
-}
+import asyncio
+from datetime import datetime
+from ts.market import get_current_window_ts  # أو إعادة تنفيذ بالـ Python
 
-كيف تبدأ مع Claude Codeقل لـ Claude مباشرة:"استخدم dev-browser مع hybrid-polymarket-5mn:
-جلب كل أسواق 5mn Crypto عبر Gamma API (fallback scrape)،
-احسب midpoint عبر CLOB،
-أرجع JSON مرتب كل 15 ثانية،
-وأرسل إشعار إذا تغيرت الأسعار >2%."
-نصائح متقدمة لأسواق 5mn Cryptoاستخدم waitUntil: "domcontentloaded" دائمًا.
-أضف snapshotForAI() لإرسال لقطة AI-friendly.
-للتداول الآلي: استخدم clob-client-v2 SDK خارج sandbox (Bash في Claude) → dev-browser فقط fallback UI.
-caching داخل الـ script لتجنب rate limits.
-multi-page لمراقبة عدة أسواق في وقت واحد.
+async def main():
+    while True:
+        window_ts = get_current_window_ts()
+        url = f"https://polymarket.com/event/btc-updown-5m-{window_ts}"
+        
+        # استدعاء Claude Agent مع dev-browser
+        result = await run_claude_agent(
+            f"استخدم dev-browser → افتح {url} → استخرج odds → طبق الاستراتيجية"
+        )
+        
+        print(f"[{datetime.now()}] BTC 5m Market {window_ts} → {result}")
+        await asyncio.sleep(300)  # كل 5 دقائق
 
-المخاطر والتحذيرات الهامةالتداول الآلي يحمل مخاطر مالية عالية.
-يخضع لشروط Polymarket وقوانين بلدك.
-لا تشارك Private Keys داخل sandbox أبدًا.
-DOM قد يتغير → الـ fallback يحميك.
-استخدم في بيئة اختبار أولاً.
+ ملاحظات أمان وقانونية مهمةPolymarket ToS: الـ automation مسموح للاستخدام الشخصي، لكن تجنب spam أو overload.
+Wallet Security: لا تخزن Private Keys في الكود. استخدم MetaMask + manual signing أو WalletConnect API.
+Risk Disclaimer: هذا bot لأغراض تعليمية/بحثية. التداول يحمل مخاطر عالية.
+dev-browser sandboxed → آمن تمامًا (لا وصول للملفات أو الـ host).
 
+ الخطوات القادمة (Roadmap)إضافة Technical Analysis (RSI, EMA, Orderbook via Gamma API)
+Auto-trading مع thresholds
+Telegram/Discord alerts
+Backtesting engine
+Multi-asset support (ETH, SOL, ...)
 
+ Star the repo if you find it useful!Made with  for the Polymarket 5m BTC degens
 
-
-
+---
